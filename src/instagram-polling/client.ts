@@ -59,4 +59,8 @@ export class InstagramDispatcher {
             await this.ig.account.login(this.username, this.password);
         }
     }
+
+    async getPostMedia(postId: string) {
+
+    }
 }
