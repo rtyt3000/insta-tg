@@ -23,24 +23,30 @@ const getMediaFromPost = (post: UserFeedResponseItemsItem) =>{
     return links;
 }
 
-dispatcher.onNewPost(async (ig, caption, media, type) => {
+dispatcher.onNewPost(async (caption, media, type) => {
     let tgPostCaption: string | undefined;
 
     
     if (media.length == 0)
         return logger.warn("Post has no media, skipping");
 
-    if (caption) 
-        tgPostCaption = (await translator.translateText(caption, null, "ru")).text;
-
+    if (caption) tgPostCaption = 
+    `От автора:<blockquote>${(await translator.translateText(caption, null, "ru")).text}</blockquote>`
+    
     logger.info("New post with media", {media});
 
     if (type === 1) {
         logger.info("Sending photo");
-        await bot.api.sendPhoto(env.CHANNEL_ID, media[0], {caption: tgPostCaption});
+        await bot.api.sendPhoto(env.CHANNEL_ID, media[0], {
+            caption: tgPostCaption,
+            parse_mode: "HTML"
+        });
     } else if (type === 2) {
         logger.info("Sending video");
-        await bot.api.sendVideo(env.CHANNEL_ID, media[0], {caption: tgPostCaption});
+        await bot.api.sendVideo(env.CHANNEL_ID, media[0], {
+            caption: tgPostCaption,
+            parse_mode: "HTML"
+        });
     } else if (type === 8) {
         logger.info("Sending media group");
         const input: (InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo)[] = [];
@@ -48,6 +54,7 @@ dispatcher.onNewPost(async (ig, caption, media, type) => {
             input.push(InputMediaBuilder.photo(img));
         })
         input[0].caption = tgPostCaption;
+        input[0].parse_mode = "HTML";
 
         await bot.api.sendMediaGroup(env.CHANNEL_ID, input );
 

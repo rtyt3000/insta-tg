@@ -5,8 +5,13 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+bun.lock
+
 /.pnp
 .pnp.js
 .env
 
 .vscode/*
+
+posts.json
+bun.lock

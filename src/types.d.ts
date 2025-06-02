@@ -1,3 +1,4 @@
 import { Context } from 'grammy';
+import { ParseModeFlavor } from '@grammyjs/parse-mode';
 
-type BotContext = Context;
+type BotContext = ParseModeFlavor<Context>;

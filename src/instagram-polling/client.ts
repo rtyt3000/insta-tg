@@ -2,14 +2,13 @@ import {
     IgApiClient, UserFeedResponseItemsItem
 } from "instagram-private-api";
 import {logger} from "../config";
-import { getPostMedia } from "../helpers";
+import { getPostMedia, isInDatabase, addToDatabase } from "../helpers";
 
 export class InstagramDispatcher {
     password: string;
     username: string;
     ig: IgApiClient;
     newPostHandler: (
-        ig: IgApiClient,
         caption: string | undefined, 
         media: Array<string>, 
         type: number
@@ -24,7 +23,7 @@ export class InstagramDispatcher {
         this.newPostHandler = async () => {};
     }
 
-    onNewPost = (handler: (ig: IgApiClient, caption: string | undefined, media: Array<string>, type: number) => Promise<void>) =>
+    onNewPost = (handler: (caption: string | undefined, media: Array<string>, type: number) => Promise<void>) =>
         this.newPostHandler = handler;
 
     getLatestPost = async (username: string) => {
@@ -39,29 +38,21 @@ export class InstagramDispatcher {
     start = async (username: string, interval: number = 60000) => {
         try {
             await this.ig.account.login(this.username, this.password);
-
-            let lastPost = await this.getLatestPost(username);
-            if (lastPost) {
-                logger.info(`Last post id: ${lastPost.id}`);
-            }
-
-            setInterval(async () => {
-                const newPost = await this.getLatestPost(username);
-                if (newPost) {
-                    if (lastPost) {
-                        if (newPost.id !== lastPost.id) {
-                            await this.newPostHandler(this.ig, newPost.caption?.text, await getPostMedia(this.ig, newPost.id), newPost.media_type);
-                            lastPost = newPost;
-                        }
-                    } else {
-                        await this.newPostHandler(this.ig, newPost.caption?.text, await getPostMedia(this.ig, newPost.id), newPost.media_type);
-                        lastPost = newPost;
-                    }
-                }
-            }, interval);
+            this.polling(username);
+            
+            setInterval(() => this.polling(username), interval);
         } catch (IgLoginRequiredError)  {
             await this.ig.account.login(this.username, this.password);
         }
     }
 
+    polling = async (username: string) => {
+        const post = await this.getLatestPost(username);
+        if (!post) return
+                
+        if (!await isInDatabase(post.id)) {
+            await addToDatabase(post.id);
+            await this.newPostHandler(post.caption?.text, await getPostMedia(this.ig, post.id), post.media_type);
+        }
+    }
 }
