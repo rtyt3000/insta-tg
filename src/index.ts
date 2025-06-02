@@ -1,8 +1,8 @@
 import {dispatcher} from "./instagram-polling";
-import {bot, logger} from "./config";
+import {bot, logger, env} from "./config";
 import {handlers} from "./handlers";
 
-dispatcher.start("rtyt.4000")
+dispatcher.start(env.MONITORING_USERNAME)
 logger.info("Polling started")
 
 bot
