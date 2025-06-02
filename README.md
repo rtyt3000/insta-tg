@@ -1,8 +1,5 @@
 # Insta-TG
 A simple bot that forwards Instagram posts to Telegram channels.
-
-Currently not finalised, if you have the energy you can try to make it normally working
-
 ## Installation
 1. Clone the repository
 2. Install the requirements
@@ -14,3 +11,10 @@ bun i
 ```bash
 bun start
 ```
+## How to fill in .env
+### Instagram
+Simply register an account and save your login and password.
+### Telegram
+Create bot with [BotFather](t.me/botfather) and save token
+### Deepl
+Register an account and create a key at [this page](https://www.deepl.com/en/your-account/keys)
