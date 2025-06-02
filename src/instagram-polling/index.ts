@@ -23,30 +23,29 @@ const getMediaFromPost = (post: UserFeedResponseItemsItem) =>{
     return links;
 }
 
-dispatcher.onNewPost(async (post) => {
+dispatcher.onNewPost(async (ig, caption, media, type) => {
     let tgPostCaption: string | undefined;
 
-    if (post.caption) {
-        tgPostCaption = (await translator.translateText(post.caption.text, null, "ru")).text;
-    }
+    
+    if (media.length == 0)
+        return logger.warn("Post has no media, skipping");
 
-    const media = getMediaFromPost(post);
+    if (caption) 
+        tgPostCaption = (await translator.translateText(caption, null, "ru")).text;
+
     logger.info("New post with media", {media});
 
-    if (media.images.length == 1 && media.videos.length == 0) {
+    if (type === 1) {
         logger.info("Sending photo");
-        await bot.api.sendPhoto(env.CHANNEL_ID, media.images[0], {caption: tgPostCaption});
-    } else if (media.videos.length == 1 && media.images.length == 0) {
+        await bot.api.sendPhoto(env.CHANNEL_ID, media[0], {caption: tgPostCaption});
+    } else if (type === 2) {
         logger.info("Sending video");
-        await bot.api.sendVideo(env.CHANNEL_ID, media.videos[0], {caption: tgPostCaption});
-    } else if (media.images.length > 1 || media.videos.length > 1) {
+        await bot.api.sendVideo(env.CHANNEL_ID, media[0], {caption: tgPostCaption});
+    } else if (type === 8) {
         logger.info("Sending media group");
         const input: (InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo)[] = [];
-        media.images.forEach((img) => {
+        media.forEach((img) => {
             input.push(InputMediaBuilder.photo(img));
-        })
-        media.videos.forEach((vid) => {
-            input.push(InputMediaBuilder.video(vid));
         })
         input[0].caption = tgPostCaption;
 

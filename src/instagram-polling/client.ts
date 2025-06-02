@@ -2,14 +2,20 @@ import {
     IgApiClient, UserFeedResponseItemsItem
 } from "instagram-private-api";
 import {logger} from "../config";
+import { getPostMedia } from "../helpers";
 
 export class InstagramDispatcher {
     password: string;
     username: string;
     ig: IgApiClient;
-    newPostHandler: (post: UserFeedResponseItemsItem) => Promise<void>;
+    newPostHandler: (
+        ig: IgApiClient,
+        caption: string | undefined, 
+        media: Array<string>, 
+        type: number
+    ) => Promise<void>;
 
-    constructor(username: string, password: string) {
+    constructor (username: string, password: string) {
         this.username = username;
         this.password = password;
         this.ig = new IgApiClient();
@@ -18,21 +24,19 @@ export class InstagramDispatcher {
         this.newPostHandler = async () => {};
     }
 
-    onNewPost(handler: (post: UserFeedResponseItemsItem) => Promise<void>) {
+    onNewPost = (handler: (ig: IgApiClient, caption: string | undefined, media: Array<string>, type: number) => Promise<void>) =>
         this.newPostHandler = handler;
-    }
 
-    async getLatestPost(username: string) {
-
+    getLatestPost = async (username: string) => {
         const userId = await this.ig.user.getIdByUsername(username);
-
         const userFeed = this.ig.feed.user(userId);
+
         const posts = await userFeed.items();
 
         return posts[0]
     }
 
-    async start(username: string, interval: number = 60000) {
+    start = async (username: string, interval: number = 60000) => {
         try {
             await this.ig.account.login(this.username, this.password);
 
@@ -46,11 +50,11 @@ export class InstagramDispatcher {
                 if (newPost) {
                     if (lastPost) {
                         if (newPost.id !== lastPost.id) {
-                            await this.newPostHandler(newPost);
+                            await this.newPostHandler(this.ig, newPost.caption?.text, await getPostMedia(this.ig, newPost.id), newPost.media_type);
                             lastPost = newPost;
                         }
                     } else {
-                        await this.newPostHandler(newPost);
+                        await this.newPostHandler(this.ig, newPost.caption?.text, await getPostMedia(this.ig, newPost.id), newPost.media_type);
                         lastPost = newPost;
                     }
                 }
@@ -60,7 +64,4 @@ export class InstagramDispatcher {
         }
     }
 
-    async getPostMedia(postId: string) {
-
-    }
 }

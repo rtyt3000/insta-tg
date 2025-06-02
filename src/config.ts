@@ -5,7 +5,6 @@ import {Translator} from "deepl-node";
 import { configDotenv } from 'dotenv';
 import {BotContext} from "./types";
 
-
 configDotenv();
 
 // Define the environment variables schema
